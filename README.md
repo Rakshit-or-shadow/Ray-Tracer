@@ -1,7 +1,7 @@
 # Assignment - Dynamic Allocation, File I/O, Low Level Programming, Strings, qSort
 
 ## Ray Tracing
-Having established the theoretical foundations for the game play of your new game, your studio informs you they have failed to hire any graphics programmers. Only a minor setback, as you have now been relocated to lead the graphics division. You want to make this a truly next-gen game, so it will be entirely ray traced. Unsatisfied with every game engine and rendering tool on the market, you decide to make your own in stock C to fully customize it for your needs. 
+Having established the theoretical foundations for the gameplay of your new game, your studio informs you they have failed to hire any graphics programmers. Only a minor setback, as you have now been relocated to lead the graphics division. You want to make this a truly next-gen game, so it will be entirely ray traced. Unsatisfied with every game engine and rendering tool on the market, you decide to make your own in standard C to fully customize it for your needs. 
 
 <img src="assets/main2.png" />
 
@@ -965,6 +965,7 @@ Input:
 ```
 
 Output:
+
 <img src="assets/MS211.png" />
 
 #### Example 2
@@ -986,6 +987,7 @@ Input:
 ```
 
 Output:
+
 <img src="assets/MS212.png" />
 
 #### Example 3
@@ -1007,6 +1009,7 @@ Input:
 ```
 
 Output:
+
 <img src="assets/MS213.png" />
 
 All of these and more testcases may be found in `MS2_Testcases`.
@@ -1041,6 +1044,7 @@ Input:
 ```
 
 Output:
+
 <img src="assets/FS11.png" />
 
 #### Example 2
@@ -1062,6 +1066,7 @@ Input:
 ```
 
 Output:
+
 <img src="assets/FS12.png" />
 
 #### Example 3
@@ -1083,6 +1088,7 @@ Input:
 ```
 
 Output:
+
 <img src="assets/FS13.png" />
 
 All of these and more testcases may be found in `FS_Testcases`.
