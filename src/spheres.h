@@ -2,6 +2,9 @@
 #define SPHERES_H
 
 #include "vector.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
 
 typedef struct {
     float r;

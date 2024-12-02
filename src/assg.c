@@ -1,31 +1,36 @@
-// File: src/assg.c
-// Name- Rakshit Singh
-// Student ID- 1824303
-// Used resources - Given Course Book,Lecture Slides and Lab-3,4,5 concept with Basic C programming concepts 
-// Used resources(links{only for concept clarity}) - https://eclass.srv.ualberta.ca/mod/page/view.php?id=8249101
+// file: src/assg.c
+// name- rakshit singh
+// student id- 1824303
+// used resources - given course book, lecture slides, and lab-3,4,5 concepts with basic c programming concepts 
+// used resources(links{only for concept clarity}) - https://eclass.srv.ualberta.ca/mod/page/view.php?id=8249101
 //                                                   https://stackoverflow.com/questions/2018730/fprintf-with-string-argument
 //                                                   https://stackoverflow.com/questions/3351809/reading-file-using-fscanf-in-c
+//                                                   https://developer.arm.com/documentation/dui0041/c/arm-compiler-reference/limits-for-floating-point-numbers
 //                                                   https://stackoverflow.com/questions/22156494/getting-a-memory-leak-from-dynamically-allocated-arrays
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                   CMPUT 201 Discord server for general help with funtions and many more concepts like shadow,lighting,ray generation etc.
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 #include <math.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "spheres.h"
 #include "vector.h"
+#include "color.h"
 
-// Structures for vectors and rays
+// structures for vectors and rays
 typedef struct {
     Vec3 origin;
     Vec3 direction;
 } Ray;
 
-// Light source structure
 typedef struct {
     Vec3 position;
     float brightness;
 } Light;
 
-// Global camera and viewport parameters
+// global camera and viewport parameters
 struct {
     Vec3 position;
     float focal_length;
@@ -36,113 +41,194 @@ struct {
     Vec3 first_pixel;
 } Camera;
 
-// Global scene variables
-Light globallight;
-Vec3 backgroundcolor = {0, 0, 0}; // Initialize backgroundcolor
+// global scene variables
+Vec3 backgroundcolor = {0, 0, 0}; // initialize background color
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// function prototypes
+Vec3 calculateLighting(Vec3 p, Vec3 n, Vec3 sphereColor, Light light);
+Vec3 CalculateShadow(Vec3 p, Vec3 n, Vec3 surfaceLightingColor, Vec3 d, Sphere **spheres, int sphereCount);
+Vec3 calculateLightingAndShadows(Vec3 p, Vec3 n, Vec3 sphereColor, Light light, Sphere **spheres, int sphereCount);
+Ray ray_generation(int x, int y, int image_width, int image_height);
+Vec3 calculateColor(Ray ray, World *world, Light light_source);
 
-// Initialize camera and viewport
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// function definitions
+
+// initialize camera and viewport
 void Initialize_camera(float focal_length, float viewport_height, int image_width, int image_height) {
-    // set camera position to 0,0,0
-    Camera.position.x = 0;
-    Camera.position.y = 0;
-    Camera.position.z = 0;
-
-    // set focal length and viewport wigth and height
+    // initialize camera 
+    Camera.position = (Vec3){0, 0, 0};
+    // initialize viewport
     Camera.focal_length = focal_length;
+    // calculate viewport height
     Camera.viewport_height = viewport_height;
+    // calculate viewport width
     Camera.viewport_width = viewport_height * ((float)image_width / image_height);
-
-    // calculate pixel size in x and y direction
+    // calculate pixel values
     Camera.x_value_pixel = Camera.viewport_width / image_width;
     Camera.y_value_pixel = Camera.viewport_height / image_height;
-
-    // calculate viewport first pixel position
-    Camera.first_pixel.x = -Camera.viewport_width / 2;
-    Camera.first_pixel.y = Camera.viewport_height / 2;
-    Camera.first_pixel.z = -Camera.focal_length;
+    // calculate first pixel
+    Camera.first_pixel = (Vec3){
+        // x and y values of the first pixel in the viewport 
+        -Camera.viewport_width / 2 + Camera.x_value_pixel / 2, //left edge djusts the position to the center of the first pixel.
+        Camera.viewport_height / 2 - Camera.y_value_pixel / 2, //top edge adjusts the position to the center of the first pixel.
+        -Camera.focal_length
+    };
 }
 
-// generate ray for a pixel
-Ray Ray_generation(int pixel_x_cords, int pixel_y_cords, int image_width, int image_height) {
+// generate ray for a pixel sample ms-2
+Ray ray_generation(int x, int y, int image_width, int image_height) {
+    // initialize ray
     Ray ray;
+    // calculate ray origin
     ray.origin = Camera.position;
-    
-    // calculate pixel center in viewport coordinates
-    float pixel_center_x = Camera.first_pixel.x + (pixel_x_cords + 0.5) * Camera.x_value_pixel;
-    float pixel_center_y = Camera.first_pixel.y - (pixel_y_cords + 0.5) * Camera.y_value_pixel;
-    float pixel_center_z = Camera.first_pixel.z;
-    
-    // calculate ray direction (from camera to pixel center)
-    Vec3 pixel_center;
-    pixel_center.x = pixel_center_x;
-    pixel_center.y = pixel_center_y;
-    pixel_center.z = pixel_center_z;
-    
-    // subtract camera position from pixel center to get direction
-    ray.direction = subtract(pixel_center, ray.origin);
-    
-    // normalize the direction vector
-    ray.direction = normalize(ray.direction);
-    
-    // return the generated ray
+    Vec3 pixel_position = {
+        // calculate pixel position
+        Camera.first_pixel.x + x * Camera.x_value_pixel, // adding the x value of the first pixel and x value of the pixel multiplied by x value of the pixel
+        Camera.first_pixel.y - y * Camera.y_value_pixel, // subtracting the y value of the first pixel and y value of the pixel multiplied by y value of the pixel
+        Camera.first_pixel.z
+    };
+    // calculate ray direction
+    ray.direction = normalize(subtract(pixel_position, ray.origin)); // normalize the vector
     return ray;
 }
 
+// calculate the color for a given ray
+Vec3 calculateColor(Ray ray, World *world, Light light_source) {
+    //set the smallest t to the maximum value of float flt_max
+    float smallest_t = 3.40282347e+38F;
+    //initialize the color to the background color
+    Vec3 color = backgroundcolor; 
+    //iterate through all the spheres in the world
+    for (int i = 0; i < world->size; i++) {
+        float t;
+        //check if the ray intersects with the sphere
+        if (doesIntersect(world->spheres[i], ray.origin, ray.direction, &t) && t < smallest_t) {
+            //update the smallest t to the current t
+            smallest_t = t;
+            //calculate the intersection point and normal vector at the intersection point 
+            Vec3 intersectionPoint = add(ray.origin, scalarMultiply(t, ray.direction));
+            Vec3 normal = normalize(subtract(intersectionPoint, world->spheres[i]->pos));
+            //calculate the color of the sphere at the intersection point with lighting and shadows
+            color = calculateLightingAndShadows(intersectionPoint, normal, world->spheres[i]->color, light_source, world->spheres, world->size);
+        }
+    }
+    return color;
+}
+
+// calculate lighting
+Vec3 calculateLighting(Vec3 p, Vec3 n, Vec3 sphereColor, Light light) {
+    //calculate the direction vector from the intersection point to the light source
+    Vec3 d = normalize(subtract(light.position, p));
+    //calculate the dot product of the direction vector and the normal vector
+    float dotProduct = fmax(dot(d, n), 0.0f);
+    //calculate the square of the distance between the intersection point and the light source
+    float distSq = distance2(light.position, p);
+    //calculate the intensity of the light at the intersection point
+    float I0 = light.brightness * dotProduct / distSq;
+    // cap intensity to 1
+    float I = fmin(1.0f, I0);
+
+    //calculate the surface lighting color at the intersection point using the intensity of the light source
+    Vec3 surfaceLightingColor = {
+        sphereColor.x * I,
+        sphereColor.y * I,
+        sphereColor.z * I
+    };
+
+    return surfaceLightingColor;
+}
+
+// check for shadows
+Vec3 CalculateShadow(Vec3 p, Vec3 n, Vec3 surfaceLightingColor, Vec3 d, Sphere **spheres, int sphereCount) {
+    //create a shadow ray from the intersection point to the light source
+    Ray shadowRay = { p, d };
+
+    //iterate through all the spheres in the world
+    for (int i = 0; i < sphereCount; i++) {
+        float t;
+        //check if the shadow ray intersects with the sphere
+        if (doesIntersect(spheres[i], shadowRay.origin, shadowRay.direction, &t)) {
+            // Ignore intersections that are very close to the origin of the shadow ray
+            if (t > 0.001f) {
+                surfaceLightingColor.x *= 0.1f;
+                surfaceLightingColor.y *= 0.1f;
+                surfaceLightingColor.z *= 0.1f;
+                break;
+            }
+        }
+    }
+
+    return surfaceLightingColor;
+}
+
+// combine lighting and shadows
+Vec3 calculateLightingAndShadows(Vec3 p, Vec3 n, Vec3 sphereColor, Light light, Sphere **spheres, int sphereCount) {
+    //calculate the direction vector from the intersection point to the light source 
+    Vec3 d = normalize(subtract(light.position, p));
+    Vec3 surfaceLightingColor = calculateLighting(p, n, sphereColor, light);
+
+    //calculate the surface lighting color at the intersection point with shadows
+    surfaceLightingColor = CalculateShadow(p, n, surfaceLightingColor, d, spheres, sphereCount);
+    return surfaceLightingColor;
+}
+
 // scene initialization
-void init_scene(Vec3 light_vector, float light_intensity) {
-    // set global light position
-    globallight.position = light_vector;
-    
-    // set global light brightness
-    globallight.brightness = light_intensity;
+void init_scene(Vec3 light_vector, float light_intensity, Light light_source) {
+    // set the light source position and brightness 
+
+    light_source.position = light_vector;
+    light_source.brightness = light_intensity;
 }
 
 // light intensity at a point
-float calculate_light_intensity(Vec3 point) {
-    // calculate direction from point to light
-    Vec3 light_dir = subtract(globallight.position, point);
-    
-    // calculate distance to light
+float calculate_light_intensity(Vec3 point, Light light_source) {
+    // calculate the direction vector from the intersection point to the light source
+    Vec3 light_dir = subtract(light_source.position, point);
+    // calculate the distance between the intersection point and the light source
     float distance = length(light_dir);
-    
-    // normalize the light direction
+    // normalize the direction vector
     light_dir = normalize(light_dir);
-    
-    // calculate intensity
-    return globallight.brightness / (distance * distance);
+    // calculate the intensity of the light at the intersection point
+    return light_source.brightness / (distance * distance);
 }
 
 // function to read colors from file
 void readColors(FILE *input_file, unsigned int *colors, int total_colors) {
+    // read colors from file and store in array of colors
     for (int i = 0; i < total_colors; i++) {
-        // read color value from file
         fscanf(input_file, "%x", &colors[i]);
     }
 }
 
 // function to read spheres from file and add to the world
 void readSpheres(FILE *input_file, int total_spheres, World *world) {
+    // read spheres from file and add to the world
     for (int i = 0; i < total_spheres; i++) {
+        // read sphere parameters from file and create sphere object and add to world 
         Vec3 position;
         float radius;
         int color_index;
+        // read sphere from file
         fscanf(input_file, "%f %f %f %f %d", &position.x, &position.y, &position.z, &radius, &color_index);
-
-        // use white color (1, 1, 1) we dont need antything for milestone 1 
         Sphere *sphere = createSphere(radius, position, (Vec3){1, 1, 1});
         addSphere(world, sphere);
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                    MS1                                                                                                    //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// print vector operations
 void printVectorOperations(FILE *output_file, Vec3 backgroundcolor, Vec3 globallight_position, float viewport_width) {
     Vec3 add_result = add(backgroundcolor, globallight_position);
     Vec3 sub_result = subtract(backgroundcolor, globallight_position);
     Vec3 scalar_result = scalarMultiply(viewport_width, globallight_position);
     Vec3 norm_result = normalize(globallight_position);
 
-    // Print vector operations
     fprintf(output_file, "(%.1f, %.1f, %.1f) + (%.1f, %.1f, %.1f) = (%.1f, %.1f, %.1f)\n",
         backgroundcolor.x, backgroundcolor.y, backgroundcolor.z,
         globallight_position.x, globallight_position.y, globallight_position.z,
@@ -160,6 +246,7 @@ void printVectorOperations(FILE *output_file, Vec3 backgroundcolor, Vec3 globall
         norm_result.x, norm_result.y, norm_result.z);
 }
 
+// print sphere operations
 void printSphereOperations(FILE *output_file, Vec3 globallight_position, World world) {
     for (int i = 0; i < world.size; i++) {
         Sphere *sphere = world.spheres[i];
@@ -168,7 +255,6 @@ void printSphereOperations(FILE *output_file, Vec3 globallight_position, World w
         float dist_result = distance(globallight_position, sphere->pos);
         float length_result = length(sphere->pos);
 
-        // Print sphere operations
         fprintf(output_file, "\n(%.1f, %.1f, %.1f) / %.1f = (%.1f, %.1f, %.1f)\n",
             sphere->color.x, sphere->color.y, sphere->color.z, sphere->r,
             div_result.x, div_result.y, div_result.z);
@@ -183,80 +269,82 @@ void printSphereOperations(FILE *output_file, Vec3 globallight_position, World w
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                    MS2                                                                                                    //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// render the scene and write to ppm file
+void renderScene(World *world, int image_width, int image_height, FILE *output_file, Light light_source) {
+    for (int y = 0; y < image_height; y++) {
+        for (int x = 0; x < image_width; x++) {
+            Ray ray = ray_generation(x, y, image_width, image_height); 
+            Vec3 color = calculateColor(ray, world, light_source);
+            writeColour(output_file, color);
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// main function
 
 int main(int argc, char const *argv[]) {
-    // Check for correct number of arguments
     if (argc != 3) {
-        printf("Incorrect number of arguments.\n");
+        printf("incorrect number of arguments.\n");
         return 1;
     }
 
-    // Read input and output file paths
     const char *input_path = argv[1];
     const char *output_path = argv[2];
 
-    // Open input file
     FILE *input_file = fopen(input_path, "r");
     if (input_file == NULL) {
-        printf("Error! Could not open file\n");
+        printf("error! could not open file\n");
         return 1;
     }
 
-// Read input file
-    int image_width;
-    int image_height;
-    int total_colors;
-    int background_index;
-    int total_spheres;
-
-    float viewport_height;
-    float focal_length;
-
+    int image_width, image_height, total_colors, background_index, total_spheres; // background_index is unused
+    float viewport_height, focal_length;
     Light light_source;
     World world;    
     worldInit(&world);
 
-    // Read input file
     fscanf(input_file, "%d %d", &image_width, &image_height);
     fscanf(input_file, "%f", &viewport_height);
     fscanf(input_file, "%f", &focal_length);
     fscanf(input_file, "%f %f %f %f", &light_source.position.x, &light_source.position.y, &light_source.position.z, &light_source.brightness);
     fscanf(input_file, "%d", &total_colors);
 
-    // Array for colors in the input file
-    unsigned int colors[total_colors];
+    unsigned int colors[total_colors]; // colors is unused
     readColors(input_file, colors, total_colors);
 
-    // Read background color
     fscanf(input_file, "%d", &background_index);
     fscanf(input_file, "%d", &total_spheres);
 
-    // Read spheres
     readSpheres(input_file, total_spheres, &world);
 
     fclose(input_file);
 
-    // Initialize camera and scene
     Initialize_camera(focal_length, viewport_height, image_width, image_height);
-    init_scene(light_source.position, light_source.brightness);
-    
-    // Open output file
+    init_scene(light_source.position, light_source.brightness, light_source);
+
     FILE *output_file = fopen(output_path, "w");
     if (!output_file) {
-        printf("Failed to open output file: %s\n", output_path);
+        printf("failed to open output file: %s\n", output_path);
         return 1;
     }
 
-    // Output for Milestone 1
     #ifdef MS1
-    printVectorOperations(output_file, backgroundcolor, globallight.position, Camera.viewport_width);
-    printSphereOperations(output_file, globallight.position, world);
+    printVectorOperations(output_file, backgroundcolor, light_source.position, Camera.viewport_width);
+    printSphereOperations(output_file, light_source.position, world);
     #endif
 
+    #ifdef MS2
+    fprintf(output_file, "P3\n%d %d\n255\n", image_width, image_height);
+    renderScene(&world, image_width, image_height, output_file, light_source);
+    #endif
+    
     fclose(output_file);
-
-    // Free the allocated memory for spheres
     freeWorld(&world);
 
     return 0;

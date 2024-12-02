@@ -3,6 +3,9 @@
 
 #include "vector.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h> 
+
 
 Vec3 unpackRGB(unsigned int packedRGB);
 void writeColour(FILE *ppmFile, Vec3 color);

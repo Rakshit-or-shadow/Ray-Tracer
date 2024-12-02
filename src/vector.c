@@ -2,9 +2,6 @@
 // Name- Rakshit Singh
 // Student ID- 1824303
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 #include "vector.h"
 
 // adds two vectors

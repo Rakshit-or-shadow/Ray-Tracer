@@ -3,8 +3,7 @@
 // Student ID- 1824303
 
 #include "spheres.h"
-#include <stdlib.h>
-#include <stdio.h>
+
 
 // initializes the world structure with capacity of 1
 void worldInit(World *world) {
@@ -90,4 +89,43 @@ Sphere *createSphere(float radius, Vec3 position, Vec3 color) {
     sphere->color = color;
     // return the created sphere
     return sphere;
+}
+
+// Function to check if a ray intersects with a sphere
+int doesIntersect(const Sphere *sphere, Vec3 rayPos, Vec3 rayDir, float *t) {
+    // vector from the ray position to the sphere center
+    Vec3 V = subtract(rayPos, sphere->pos);
+
+    // coefficients of the quadratic equation
+    float a = dot(rayDir, rayDir); // rayDir . rayDir
+    float b = 2 * dot(rayDir, V);  // 2 * (rayDir . V)
+    float c = dot(V, V) - sphere->r * sphere->r; // V . V - r^2
+
+    // discriminant value
+    float discriminant = b * b - 4 * a * c;
+
+    // discriminant is negative, no intersection
+    if (discriminant < 0) {
+        return 0; 
+    }
+
+    // calculate the two possible solutions for t
+    float sqrtDiscriminant = sqrt(discriminant);
+    float t1 = (-b - sqrtDiscriminant) / (2 * a);
+    float t2 = (-b + sqrtDiscriminant) / (2 * a);
+
+    // intersections are in front of the ray
+    if (t1 >= 0 && t2 >= 0) {
+        *t = (t1 < t2) ? t1 : t2; // closer intersection comparision
+        return 1; // both front of the ray
+    } else if (t1 >= 0) {
+        *t = t1; // t1 is in front
+        return 1;
+    } else if (t2 >= 0) {
+        *t = t2; // t2 is in front 
+        return 1;
+    }
+
+    // both behind the ray
+    return 0;
 }
