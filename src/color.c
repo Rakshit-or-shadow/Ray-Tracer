@@ -1,4 +1,7 @@
 #include "color.h"
+#include <stdio.h>
+#include <math.h>
+
 
 // Remove the redundant Vec3 definition
 

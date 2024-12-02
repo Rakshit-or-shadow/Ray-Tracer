@@ -1,10 +1,6 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-
 typedef struct {
     float x;
     float y;

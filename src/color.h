@@ -3,8 +3,6 @@
 
 #include "vector.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <math.h> 
 
 
 Vec3 unpackRGB(unsigned int packedRGB);

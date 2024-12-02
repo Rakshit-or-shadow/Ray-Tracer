@@ -3,6 +3,8 @@
 // Student ID- 1824303
 
 #include "vector.h"
+#include <math.h>
+
 
 // adds two vectors
 Vec3 add(Vec3 v1, Vec3 v2) {

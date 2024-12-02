@@ -3,6 +3,9 @@
 // Student ID- 1824303
 
 #include "spheres.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
 
 
 // initializes the world structure with capacity of 1
