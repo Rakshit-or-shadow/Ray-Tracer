@@ -1,6 +1,5 @@
 // File: src/assg.c
 // Name- Rakshit Singh
-// Student ID- 1824303
 
 #include "spheres.h"
 #include <stdlib.h>

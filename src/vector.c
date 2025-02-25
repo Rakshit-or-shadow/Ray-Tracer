@@ -1,6 +1,5 @@
 // File: src/assg.c
 // Name- Rakshit Singh
-// Student ID- 1824303
 
 #include "vector.h"
 #include <math.h>

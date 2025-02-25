@@ -1,7 +1,5 @@
 // file: src/assg.c
 // name- rakshit singh
-// student id- 1824303
-// used resources - given course book, lecture slides, and lab-3,4,5 concepts with basic c programming concepts 
 // used resources(links{only for concept clarity}) - https://eclass.srv.ualberta.ca/mod/page/view.php?id=8249101
 //                                                   https://stackoverflow.com/questions/2018730/fprintf-with-string-argument
 //                                                   https://stackoverflow.com/questions/3351809/reading-file-using-fscanf-in-c

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # *-------------------- `check.sh` Exit Codes --------------------* #
-#  0 : Success              :   Student gets at least 50%
+#  0 : Success              :   All testcases passed
 #  1 : Student error        :   `diff` fail, timeouts, etc
 #  2 : Development error    :   Missing testcase dirs, missing output files, etc
 
