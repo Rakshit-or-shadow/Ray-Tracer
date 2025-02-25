@@ -6,6 +6,17 @@ This project focuses on building a 3D renderer from scratch. The final version o
 
 The project is structured into multiple stages, each focusing on different aspects of the rendering pipeline. The suggested workflow includes developing core mathematical operations, constructing a scene, implementing a ray tracing algorithm, and progressively refining the rendering output with lighting effects and anti-aliasing.
 
+## How to Use This
+
+1. Clone this repository to your local machine:
+   ```sh
+   git clone <repository_url>
+   cd <repository_directory>
+   ```
+2. Follow the provided test cases to verify functionality.
+3. Compile and run the program using the provided Makefile.
+4. View the generated PPM files using an image viewer or the provided `viewppm` tool.
+
 ## Milestone Breakdown
 
 ### Stage 1: Core Development
